@@ -340,9 +340,19 @@ if active=="Vue générale":
     # Carte & tableau unique
     df_final['tld']=df_final['boutique_domain'].apply(lambda d:d.split('.')[-1].lower())
     df_final['country']=df_final['tld'].map(TLD_TO_COUNTRY).fillna('International')
-    dc=df_final[['boutique_domain','country']].drop_duplicates()
-    cc=dc['country'].value_counts().reset_index().rename(columns={'index':'Pays','country':'Nb_boutiques'})
-    cm=cc[cc['Pays']!='International']
+    #— regénération du comptage par pays avec noms de colonnes explicites
+    dc = df_final[['boutique_domain','country']].drop_duplicates()
+
+    cc = (
+        dc['country']
+        .value_counts()              # Série indexée par pays, valeurs = nombre de boutiques
+        .rename_axis('Pays')         # donne à l’index le nom "Pays"
+        .reset_index(name='Nb_boutiques')  # transforme en DataFrame avec colonnes Pays et Nb_boutiques
+    )
+
+    #— on exclut proprement "International"
+    cm = cc.loc[cc['Pays'] != 'International']
+
     st.subheader("🌍 Carte des Boutiques par Pays")
     if not cm.empty:
         fig6=px.choropleth(cm,locations='Pays',locationmode='country names',
