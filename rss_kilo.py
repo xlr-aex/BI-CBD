@@ -343,15 +343,18 @@ if active=="Vue générale":
     #— regénération du comptage par pays avec noms de colonnes explicites
     dc = df_final[['boutique_domain','country']].drop_duplicates()
 
-    cc = (
-        dc['country']
-        .value_counts()              # Série indexée par pays, valeurs = nombre de boutiques
-        .rename_axis('Pays')         # donne à l’index le nom "Pays"
-        .reset_index(name='Nb_boutiques')  # transforme en DataFrame avec colonnes Pays et Nb_boutiques
-    )
+    cc = pd.DataFrame({
+        'Pays': dc['country'].value_counts().index,
+        'Nb_boutiques': dc['country'].value_counts().values
+    })
 
-    #— on exclut proprement "International"
-    cm = cc.loc[cc['Pays'] != 'International']
+    # And add error handling:
+    if 'Pays' not in cc.columns:
+        st.error(f"Unexpected column structure in country data. Columns found: {cc.columns.tolist()}")
+        st.stop()
+
+    # Then proceed with filtering
+    cm = cc[cc['Pays'] != 'International']
 
     st.subheader("🌍 Carte des Boutiques par Pays")
     if not cm.empty:
